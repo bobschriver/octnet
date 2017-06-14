@@ -16,7 +16,6 @@ with open(filename , 'rb') as csv_file:
 	projection = reader.next()
 	header = reader.next()
 
-	print "its chu"
 
 	x_index = header.index('X')
 	y_index = header.index('Y')
