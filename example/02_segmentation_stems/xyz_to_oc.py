@@ -2,19 +2,20 @@ import sys
 import csv
 import numpy as np
 import glob
+import os
 
-sys.path.append('../00_create_data/')
-import vis
+#sys.path.append('../00_create_data/')
+#import vis
 
-sys.path.append('../../py/')
-import pyoctnet
+#sys.path.append('../../py/')
+#import pyoctnet
 
 def xyz_to_oc(input_filename, output_rgb_filename, output_classification_filename):
 	
 	other_classification = 0.01
 	stem_classification = 1.0
 	
-	with open(input_filename , 'rb') as csv_file:
+	with open(input_filename, 'rb') as csv_file:
 		reader = csv.reader(csv_file)
 		version = reader.next()
 		projection = reader.next()
@@ -59,19 +60,29 @@ def xyz_to_oc(input_filename, output_rgb_filename, output_classification_filenam
 				classifications.append((other_classification, 1.0))
 		vx_res = 64
 
-		oc_from_xyz_rgb = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(features, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
+		print 'Writing xyz rgb octree to file %s' % (output_rgb_filename)
 
-		vis.write_ply_voxels(output_rgb_filename, oc_from_xyz_rgb.to_cdhw()[0])
+		#oc_from_xyz_rgb = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(features, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
 
-		oc_from_xyz_classification = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(classifications, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
+		#vis.write_ply_voxels(output_rgb_filename, oc_from_xyz_rgb.to_cdhw()[0])
 
-		vis.write_ply_voxels(output_classification_filename, oc_from_xyz_classification.to_cdhw()[0])
+		print 'Writing xyz classification octree to file %s' % (output_classification_filename)
+		#oc_from_xyz_classification = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(classifications, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
 
-train_path = 'train/xyz'
-test_path = 'test/xyz'
+		#vis.write_ply_voxels(output_classification_filename, oc_from_xyz_classification.to_cdhw()[0])
+
+train_path = 'train'
+test_path = 'test'
+
+input_path = 'xyz'
+output_path = 'oc'
 
 xyz_ext = '.xyz'
 ply_ext = '.ply'
+oc_ext = '.oc'
 
+for input_path in glob.glob(os.path.join(train_path, input_path, '*' + xyz_ext)):
+	head, tail = os.path.split(input_path)
+	filename, ext = os.path.splitext(tail)
 
-
+	xyz_to_oc(input_path, os.path.join(train_path, output_path, filename + '_xyz_rgb' + oc_ext), os.path.join(train_path, output_path, filename + '_classification' + oc_ext))
