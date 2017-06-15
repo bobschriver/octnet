@@ -4,18 +4,19 @@ import numpy as np
 import glob
 import os
 
-#sys.path.append('../00_create_data/')
-#import vis
+sys.path.append('../00_create_data/')
+import vis
 
-#sys.path.append('../../py/')
-#import pyoctnet
+sys.path.append('../../py/')
+import pyoctnet
 
-def xyz_to_oc(input_filename, output_rgb_filename, output_classification_filename):
+def xyz_to_oc(input_filepath, output_prefix, output_oc_path, output_ply_path):
 	
 	other_classification = 0.01
 	stem_classification = 1.0
-	
-	with open(input_filename, 'rb') as csv_file:
+
+	print 'Reading from %s' % input_filepath	
+	with open(input_filepath, 'rb') as csv_file:
 		reader = csv.reader(csv_file)
 		version = reader.next()
 		projection = reader.next()
@@ -60,29 +61,39 @@ def xyz_to_oc(input_filename, output_rgb_filename, output_classification_filenam
 				classifications.append((other_classification, 1.0))
 		vx_res = 64
 
-		print 'Writing xyz rgb octree to file %s' % (output_rgb_filename)
+		oc_from_xyz_rgb = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(features, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
+		
+		oc_rgb_filepath = os.path.join(output_oc_path, '%s_rgb.oc' % output_prefix)
+		print 'Writing to %s' % oc_rgb_filepath
+		oc_from_xyz_rgb.write_bin(oc_rgb_filepath)
 
-		#oc_from_xyz_rgb = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(features, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
+		ply_rgb_filepath = os.path.join(output_ply_path, '%s_rgb.ply' % output_prefix)
+		print 'Writing to %s' % ply_rgb_filepath
+		vis.write_ply_voxels(ply_rgb_filepath, oc_from_xyz_rgb.to_cdhw()[0])
 
-		#vis.write_ply_voxels(output_rgb_filename, oc_from_xyz_rgb.to_cdhw()[0])
+		oc_from_xyz_classification = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(classifications, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
+		
+		oc_classification_filepath = os.path.join(output_oc_path, '%s_classification.oc' % output_prefix)
+		print 'Writing to %s' % oc_classification_filepath
+		oc_from_xyz_classification.write_bin(oc_classification_filepath)
 
-		print 'Writing xyz classification octree to file %s' % (output_classification_filename)
-		#oc_from_xyz_classification = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(classifications, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
-
-		#vis.write_ply_voxels(output_classification_filename, oc_from_xyz_classification.to_cdhw()[0])
+		ply_classification_filepath = os.path.join(output_ply_path, '%s_classification.ply' % output_prefix)
+		print 'Writing to %s' % ply_classification_filepath
+		vis.write_ply_voxels(ply_classification_filepath, oc_from_xyz_classification.to_cdhw()[0])
 
 train_path = 'train'
 test_path = 'test'
 
 input_path = 'xyz'
-output_path = 'oc'
+output_oc_path = 'oc'
+output_ply_path = 'ply'
 
 xyz_ext = '.xyz'
 ply_ext = '.ply'
 oc_ext = '.oc'
 
-for input_path in glob.glob(os.path.join(train_path, input_path, '*' + xyz_ext)):
+for input_path in glob.glob(os.path.join(test_path, input_path, '*' + xyz_ext)):
 	head, tail = os.path.split(input_path)
 	filename, ext = os.path.splitext(tail)
 
-	xyz_to_oc(input_path, os.path.join(train_path, output_path, filename + '_xyz_rgb' + oc_ext), os.path.join(train_path, output_path, filename + '_classification' + oc_ext))
+	xyz_to_oc(input_path, filename, os.path.join(test_path, output_oc_path), os.path.join(test_path, output_ply_path))
