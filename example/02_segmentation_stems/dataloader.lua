@@ -7,6 +7,12 @@ function DataLoader:__init(data_paths, label_paths, batch_size)
 	self.label_paths = label_paths or error('')
 	self.batch_size = batch_size or error('')
 
+	assert(#self.data_paths == #self.label_paths)
+
+	self.n_samples = #self.data_paths
+
+	print(n_samples)
+
 	self.data_idx = 0
 	self.label_idx = 0
 end
@@ -23,19 +29,24 @@ function DataLoader:getBatch()
 		local used_data_path = self.data_paths[self.data_idx]
 		local used_label_path = self.label_paths[self.data_idx]
 
-		print(used_data_path)
-		print(used_label_path)
-
 		table.insert(used_data_paths, used_data_path)
 		table.insert(used_label_paths, used_label_path)	
 	end
+
+	print('[INFO] Data Batch')
+	print(used_data_paths)
+
+	print('[INFO] Label Batch')
+	print(used_label_paths)
 
 	self.data_cpu = oc.FloatOctree()
 	self.data_cpu:read_from_bin_batch(used_data_paths)
 	self.data_gpu = self.data_cpu:cuda(self.data_gpu)
 
-	self.label_cpu = oc.FloatOctree()
-	self.label_cpu:read_from_bin_batch(used_label_paths)
+	self.label_cpu_oc = oc.FloatOctree()
+	self.label_cpu_oc:read_from_bin_batch(used_label_paths)
+
+	self.label_cpu = self.label_cpu_oc:to_cdhw()
 	self.label_gpu = self.label_cpu:cuda(self.label_gpu)
 
 
@@ -46,6 +57,10 @@ function DataLoader:getBatch()
 	collectgarbage(); collectgarbage()
 
 	return self.data_gpu, self.label_gpu
+end
+
+function DataLoader:n_batches()
+	return math.floor(self.n_samples / self.batch_size)
 end
 
 return dataloader

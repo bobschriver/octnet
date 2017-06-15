@@ -8,10 +8,12 @@ function common.segmentation_worker(opt)
 
 	print ('[INFO] load train data paths')
 	local train_data_paths = common.walk_paths_cached(opt.train_data_root, opt.ext)
+	print (train_data_paths)
 	
 	print ('[INFO] load train label paths')
 	local train_label_paths = common.walk_paths_cached(opt.train_label_root, opt.ext)
-	
+	print (train_label_paths)	
+
 	print ('[INFO] load test data paths')
 	local test_data_paths = common.walk_paths_cached(opt.test_data_root, opt.ext)
 

@@ -167,6 +167,10 @@ function common.train_epoch(opt, data_loader)
       local input, target = data_loader:getBatch()
 
       local output = net:forward(input)
+
+      print('[INFO] Got Output')
+      --print(output)
+
       local f = criterion:forward(output, target)
       local dfdx = criterion:backward(output, target)
       net:backward(input, dfdx)
