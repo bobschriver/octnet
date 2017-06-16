@@ -44,6 +44,7 @@ function OctreeCrossEntropyCriterion:updateOutput(input, target)
   self.lsm:updateOutput(input)
   self.nll:updateOutput(self.lsm.output, target)
   self.output = self.nll.output
+
   return self.output
 end 
 

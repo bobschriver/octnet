@@ -166,17 +166,34 @@ function common.train_epoch(opt, data_loader)
 
       local input, target = data_loader:getBatch()
 
+      --print('[INFO] Got Input')
+      --print(input)
+      --print(input:size())
+
       local output = net:forward(input)
 
-      print('[INFO] Got Output')
+      --print('[INFO] Got Output')
+      --print(output:to_cdhw())
       --print(output)
+      --print(output:size())
+
+      --print('[INFO] Got Target')
+      --print(target:to_cdhw())
+      --print(target)
+      --print(target:size())
 
       local f = criterion:forward(output, target)
+
+      --print('[INFO] Got Criterion Forward')
+      --print(f)
+
       local dfdx = criterion:backward(output, target)
       net:backward(input, dfdx)
+
+      --print('[INFO] did backwards')
       
       if batch_idx < 129 or batch_idx % math.floor((n_batches / 200)) == 0 then 
-        print(string.format('epoch=%2d | iter=%4d | loss=%9.6f ', opt.epoch, batch_idx, f))
+        print(string.format('epoch=%2d | iter=%4d | loss=%9.9f ', opt.epoch, batch_idx, f))
       end
       
       return f, grad_parameters
@@ -195,7 +212,9 @@ function common.test_epoch(opt, data_loader)
 
   local avg_f = 0
   local accuracy = 0
+  local class_one_accuracy = 0
   local n_samples = 0
+  local class_one_samples = 0
   for batch_idx = 1, n_batches do
     print(string.format('[INFO] test batch %d/%d', batch_idx, n_batches))
 
@@ -205,23 +224,64 @@ function common.test_epoch(opt, data_loader)
 
     local timer = torch.Timer()
     local output = net:forward(input)
-    output = output[{{1,target:size(1)}, {}}]
+    --print('[INFO] Got Output')
+    --print(output)
+    --print(output:size())
+    --output = output[{{1,target:size(1)}, {}}]
+    --print('[INFO] Got Target')
+    --print(target)
+    --print(target:size())
     local f = criterion:forward(output, target)
     print(string.format('[INFO] net/crtrn fwd took %f[s]', timer:time().real))
     avg_f = avg_f + f
-    
-    local maxs, indices = torch.max(output, 2)
+   
+    --print(output:to_cdhw())
+    --print(target:to_cdhw())
+ 
+    local output_bin = output:to_cdhw()
+    local target_bin = target:to_cdhw()
+ 
+    print(output_bin[1][1][1][1][1])
+    print(target_bin[1][1][1][1][1])
+
+    print(target:size(1))
+    print(target:size(2))
+    print(target:size(3))
+    print(target:size(4))
+    print(target:size(5))
+
     for bidx = 1, target:size(1) do
-      if indices[bidx][1] == target[bidx] then
-        accuracy = accuracy + 1
+      for cidx = 1, target:size(2) do
+        for xidx = 1, target:size(3) do 
+          for yidx = 1, target:size(4) do
+            for zidx = 1, target:size(5) do 
+            --print(output_bin[bidx][xidx][yidx][zidx])
+            --print(target_bin[bidx][xidx][yidx][zidx])
+              if math.floor(output_bin[bidx][cidx][xidx][yidx][zidx] + 0.5) == target_bin[bidx][cidx][xidx][yidx][zidx] then
+		if target_bin[bidx][cidx][xidx][yidx][zidx] == 1 then
+                  class_one_accuracy = class_one_accuracy + 1
+                end
+                accuracy = accuracy + 1
+              end
+              if target_bin[bidx][cidx][xidx][yidx][zidx] == 1 then
+                class_one_samples = class_one_samples + 1
+              end
+
+              n_samples = n_samples + 1
+            end
+          end
+        end
       end
-      n_samples = n_samples + 1
     end
+    tb_accuracy = accuracy / n_samples
+    tb_class_one_accuracy = class_one_accuracy / class_one_samples
+    print(string.format('test_epoch=%d, avg_f=%f accuracy=%f class_one_accuracy=%f class_one_samples=%f', opt.epoch, avg_f, tb_accuracy, tb_class_one_accuracy, class_one_samples))
   end 
   avg_f = avg_f / n_batches
   accuracy = accuracy / n_samples
+  class_one_accuracy = class_one_accuracy / class_one_samples
 
-  print(string.format('test_epoch=%d, avg_f=%f, accuracy=%f', opt.epoch, avg_f, accuracy))
+  print(string.format('FINAL test_epoch=%d, avg_f=%f accuracy=%f class_one_accuracy=%f class_one_samples=%f', opt.epoch, avg_f, accuracy, class_one_accuracy, class_one_samples))
 end
 
 

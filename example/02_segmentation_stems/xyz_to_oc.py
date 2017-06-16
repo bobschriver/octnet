@@ -12,7 +12,7 @@ import pyoctnet
 
 def xyz_to_oc(input_filepath, output_prefix, output_oc_path, output_ply_path):
 	
-	other_classification = 0.01
+	other_classification = 0.0
 	stem_classification = 1.0
 
 	print 'Reading from %s' % input_filepath	
@@ -56,10 +56,12 @@ def xyz_to_oc(input_filepath, output_prefix, output_oc_path, output_ply_path):
 			features.append((r, g, b))
 
 			if classification == 20:
-				classifications.append((stem_classification, 1.0))
+				classifications.append([stem_classification])
 			else:
-				classifications.append((other_classification, 1.0))
-		vx_res = 64
+				classifications.append([other_classification])
+		vx_res = 256
+		
+		#print np.asarray(features, dtype=np.float32)
 
 		oc_from_xyz_rgb = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(features, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
 		
@@ -67,9 +69,13 @@ def xyz_to_oc(input_filepath, output_prefix, output_oc_path, output_ply_path):
 		print 'Writing to %s' % oc_rgb_filepath
 		oc_from_xyz_rgb.write_bin(oc_rgb_filepath)
 
+
 		ply_rgb_filepath = os.path.join(output_ply_path, '%s_rgb.ply' % output_prefix)
 		print 'Writing to %s' % ply_rgb_filepath
+		#print oc_from_xyz_rgb.to_cdhw()
 		vis.write_ply_voxels(ply_rgb_filepath, oc_from_xyz_rgb.to_cdhw()[0])
+
+		#print np.asarray(classifications, dtype=np.float32)
 
 		oc_from_xyz_classification = pyoctnet.Octree.create_from_pc(np.asarray(xyzs, dtype=np.float32), np.asarray(classifications, dtype=np.float32), vx_res, vx_res, vx_res, normalize=True)
 		
@@ -79,7 +85,8 @@ def xyz_to_oc(input_filepath, output_prefix, output_oc_path, output_ply_path):
 
 		ply_classification_filepath = os.path.join(output_ply_path, '%s_classification.ply' % output_prefix)
 		print 'Writing to %s' % ply_classification_filepath
-		vis.write_ply_voxels(ply_classification_filepath, oc_from_xyz_classification.to_cdhw()[0])
+		#print oc_from_xyz_classification.to_cdhw()
+		vis.write_ply_voxels(ply_classification_filepath, oc_from_xyz_classification.to_cdhw())
 
 train_path = 'train'
 test_path = 'test'

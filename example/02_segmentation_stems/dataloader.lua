@@ -11,7 +11,7 @@ function DataLoader:__init(data_paths, label_paths, batch_size)
 
 	self.n_samples = #self.data_paths
 
-	print(n_samples)
+	--print(n_samples)
 
 	self.data_idx = 0
 	self.label_idx = 0
@@ -33,20 +33,18 @@ function DataLoader:getBatch()
 		table.insert(used_label_paths, used_label_path)	
 	end
 
-	print('[INFO] Data Batch')
-	print(used_data_paths)
+	--print('[INFO] Data Batch')
+	--print(used_data_paths)
 
-	print('[INFO] Label Batch')
-	print(used_label_paths)
+	--print('[INFO] Label Batch')
+	--print(used_label_paths)
 
 	self.data_cpu = oc.FloatOctree()
 	self.data_cpu:read_from_bin_batch(used_data_paths)
 	self.data_gpu = self.data_cpu:cuda(self.data_gpu)
 
-	self.label_cpu_oc = oc.FloatOctree()
-	self.label_cpu_oc:read_from_bin_batch(used_label_paths)
-
-	self.label_cpu = self.label_cpu_oc:to_cdhw()
+	self.label_cpu = oc.FloatOctree()
+	self.label_cpu:read_from_bin_batch(used_label_paths)
 	self.label_gpu = self.label_cpu:cuda(self.label_gpu)
 
 

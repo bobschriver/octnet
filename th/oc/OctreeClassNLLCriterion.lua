@@ -62,6 +62,7 @@ function OctreeClassNLLCriterion:updateOutput(input, target)
 
   local out = out or torch.FloatTensor(1)
   local total_weight = total_weight or torch.FloatTensor(1)
+
   if input._type == 'oc_float' then
     oc.cpu.octree_nll_loss_cpu(input.grid, target.grid, weights:data(), 1, self.size_average, self.check, out:data(), total_weight:data())
   elseif input._type == 'oc_cuda' then

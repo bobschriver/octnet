@@ -36,7 +36,6 @@ end
 
 
 function OctreePool2x2x2:updateOutput(input)
-  print(input)
   if self.pool_fcn == 'avg' then
     if input._type == 'oc_float' then
       oc.cpu.octree_pool2x2x2_avg_cpu(input.grid, self.level_0, self.level_1, self.level_2, self.output.grid)
@@ -58,7 +57,6 @@ function OctreePool2x2x2:updateOutput(input)
 end 
 
 function OctreePool2x2x2:updateGradInput(input, gradOutput)
-  print(input)
   if self.pool_fcn == 'avg' then
     if input._type == 'oc_float' then
       oc.cpu.octree_pool2x2x2_avg_bwd_cpu(input.grid, gradOutput.grid, self.gradInput.grid)
